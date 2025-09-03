@@ -11,7 +11,9 @@
   "sections": {
     "main": {
       "type": "product",
-      "settings": {}
+      "settings": {
+        "picker_type": "pills"
+      }
     }
   },
   "order": [

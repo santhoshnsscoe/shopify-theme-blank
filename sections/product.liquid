@@ -5,46 +5,223 @@
   https://shopify.dev/docs/storefronts/themes/architecture/templates/product
 {% endcomment %}
 
-<div class="product-images">
-  {% for image in product.images %}
-    {% render 'image', class: 'product-image', image: image %}
-  {% endfor %}
-</div>
+<div class="product">
+  <div class="product__images">
+    {% for image in product.images %}
+      {% render 'image', class: 'product__image', image: image %}
+    {% endfor %}
+  </div>
+  <div class="product__details">
+    <div class="product__info">
+      <h1>{{ product.title }}</h1>
+      <p>{{ product.price | money }}</p>
+      <p>{{ product.description }}</p>
+    </div>
 
-<div class="product-info">
-  <h1>{{ product.title }}</h1>
-  <p>{{ product.price | money }}</p>
-  <p>{{ product.description }}</p>
-</div>
-
-<div class="product-form">
-  {% form 'product', product %}
-    {% assign current_variant = product.selected_or_first_available_variant %}
-
-    <select name="id">
-      {% for variant in product.variants %}
-        <option
-          value="{{ variant.id }}"
-          {% if variant == current_variant %}
-            selected="selected"
+    <div class="product__form">
+      {% form 'product', product %}
+        {% assign current_variant = product.selected_or_first_available_variant %}
+        {% if product.variants.size > 1 %}
+          {% if section.settings.picker_type == 'select' %}
+            <select class="product__variants-select" name="id">
+              {% for variant in product.variants %}
+                <option
+                  value="{{ variant.id }}"
+                  {% if variant == current_variant %}
+                    selected="selected"
+                  {% endif %}
+                >
+                  {{ variant.title }} - {{ variant.price | money }}
+                </option>
+              {% endfor %}
+            </select>
+          {% else %}
+            <input type="hidden" name="id" value="{{ current_variant.id }}">
+            <div class="product__variants-pills">
+              {% for variant in product.variants %}
+                <button
+                  class="product__variant-pill {% if variant == current_variant %}active{% endif %}{% unless variant.available %}disabled{% endunless %}"
+                  data-id="{{ variant.id }}"
+                  data-available="{{ variant.available }}"
+                >
+                  {{ variant.title }}
+                </button>
+              {% endfor %}
+            </div>
           {% endif %}
-        >
-          {{ variant.title }} - {{ variant.price | money }}
-        </option>
-      {% endfor %}
-    </select>
+        {% else %}
+          <input type="hidden" name="id" value="{{ current_variant.id }}">
+        {% endif %}
 
-    <input type="text" name="quantity" min="1" value="1">
+        <div class="product__quantity">
+          <label for="quantity">Quantity</label>
+          <input type="text" name="quantity" min="1" value="1">
+        </div>
 
-    <input type="submit" value="Add to cart">
-    {{ form | payment_button }}
-  {% endform %}
+        {% if product.available %}
+          <div class="product__buttons">
+            <input type="submit" class="product__submit" value="Add to cart">
+            {{ form | payment_button }}
+          </div>
+        {% else %}
+          <div class="product__buttons">
+            <input type="submit" class="product__submit" disabled value="Sold Out">
+          </div>
+        {% endif %}
+      {% endform %}
+    </div>
+  </div>
 </div>
+
+{% stylesheet %}
+  .product {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+  }
+  .product__images {
+    width: 50%;
+  }
+  .product__details {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .product__info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .product__form form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .product__quantity {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .product__quantity input {
+    width: 100%;
+    max-width: 100px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: 400;
+    color: #333;
+  }
+  .product__buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .product__submit {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: 400;
+    color: #333;
+    cursor: pointer;
+  }
+  .product__submit:hover {
+    background-color: #333;
+    color: #fff;
+  }
+  .product__submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .product__variants-select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: 400;
+    color: #333;
+  }
+  .product__variants-pills {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .product__variant-pill {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    min-width: 70px;
+    cursor: pointer;
+  }
+  .product__variant-pill.active {
+    background-color: #333;
+    color: #fff;
+  }
+  .product__variant-pill.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .product__variant-pill:hover {
+    background-color: #ccc;
+    color: #333;
+  }
+  .product__variant-pill:active {
+    background-color: #333;
+    color: #fff;
+  }
+  .product__variant-pill:focus {
+    outline: none;
+  }
+  .product__variant-pill:focus-visible {
+    outline: 2px solid #333;
+  }
+  .product__variant-pill:focus-visible:active {
+    outline: none;
+  }
+  .product__variant-pill:focus-visible:active:hover {
+    background-color: #333;
+    color: #fff;
+  }
+
+  @media (max-width: 768px) {
+    .product {
+      flex-direction: column;
+    }
+    .product__images {
+      width: 100%;
+    }
+    .product__details {
+      width: 100%;
+    }
+  }
+{% endstylesheet %}
+
+<script src="{{ 'product.js' | asset_url }}" defer></script>
 
 {% schema %}
 {
   "name": "t:general.product",
-  "settings": [],
+  "settings": [
+    {
+      "type": "header",
+      "content": "Variant Picker"
+    },
+    {
+      "type": "select",
+      "id": "picker_type",
+      "label": "Picker type",
+      "default": "select",
+      "options": [
+        { "value": "select", "label": "Dropdown" },
+        { "value": "pills", "label": "Pills" }
+      ]
+    }
+  ],
   "disabled_on": {
     "groups": ["header", "footer"]
   }

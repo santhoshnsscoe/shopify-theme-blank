@@ -7,7 +7,10 @@
 
 <h1>{{ collection.title }}</h1>
 
-<div class="collection-products">
+<div
+  class="collection-products {{ section.settings.grid_item_width }}"
+  style="--grid-gap: {{ section.settings.grid_gap }}px"
+>
   {% paginate collection.products by 20 %}
     {% for product in collection.products %}
       <div class="collection-product">
@@ -35,13 +38,46 @@
 {% stylesheet %}
   .collection-products {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(var(--collection-card-size), 100%), 1fr));
+    gap: var(--grid-gap);
+  }
+  .collection-products--compact {
+    --collection-card-size: 160px;
+  }
+  .collection-products--full {
+    --collection-card-size: 280px;
+  }
+  .collection-product {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
   }
 {% endstylesheet %}
 
 {% schema %}
 {
   "name": "t:general.collection",
-  "settings": []
+  "settings": [
+    {
+      "type": "select",
+      "id": "grid_item_width",
+      "label": "t:labels.grid_item_width",
+      "options": [
+        { "value": "collection-products--compact", "label": "t:options.size.small" },
+        { "value": "collection-products--full", "label": "t:options.size.large" }
+      ],
+      "default": "collection-products--full"
+    },
+    {
+      "type": "range",
+      "id": "grid_gap",
+      "label": "t:labels.grid_gap",
+      "min": 0,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "default": 10
+    }
+  ]
 }
 {% endschema %}
