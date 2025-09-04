@@ -31,7 +31,11 @@
     "sidebar": "Sidebar",
     "text": "Text",
     "theme": "Theme",
-    "typography": "Typography"
+    "typography": "Typography",
+    "variant_picker": "Variant picker",
+    "type": "Type",
+    "notify_me": "Notify Me When Available",
+    "enabled": "Enabled"
   },
   "labels": {
     "alignment": "Alignment",
@@ -72,5 +76,9 @@
       "subtitle": "Subtitle",
       "normal": "Normal text"
     },
+    "variant_picker": {
+      "dropdown": "Dropdown",
+      "pills": "Pills"
+    }
   }
 }

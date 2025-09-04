@@ -5,6 +5,15 @@
   https://shopify.dev/docs/storefronts/themes/architecture/templates/product
 {% endcomment %}
 
+{% liquid
+  assign current_variant = product.selected_or_first_available_variant
+  assign price = current_variant.price
+  assign compare_at_price = current_variant.compare_at_price
+  assign on_sale = false
+  if compare_at_price and compare_at_price > price
+    assign on_sale = true
+  endif
+%}
 <div class="product">
   <div class="product__images">
     {% for image in product.images %}
@@ -14,62 +23,20 @@
   <div class="product__details">
     <div class="product__info">
       <h1>{{ product.title }}</h1>
-      <p>{{ product.price | money }}</p>
+      <p>
+        <span class="product__price {% if on_sale %}product__sale-price{% endif %}">{{ price | money }}</span>
+        <span class="product__compare-price {% unless on_sale %}hide{% endunless %}">
+          {{- compare_at_price | money -}}
+        </span>
+      </p>
       <p>{{ product.description }}</p>
     </div>
 
-    <div class="product__form">
-      {% form 'product', product %}
-        {% assign current_variant = product.selected_or_first_available_variant %}
-        {% if product.variants.size > 1 %}
-          {% if section.settings.picker_type == 'select' %}
-            <select class="product__variants-select" name="id">
-              {% for variant in product.variants %}
-                <option
-                  value="{{ variant.id }}"
-                  {% if variant == current_variant %}
-                    selected="selected"
-                  {% endif %}
-                >
-                  {{ variant.title }} - {{ variant.price | money }}
-                </option>
-              {% endfor %}
-            </select>
-          {% else %}
-            <input type="hidden" name="id" value="{{ current_variant.id }}">
-            <div class="product__variants-pills">
-              {% for variant in product.variants %}
-                <button
-                  class="product__variant-pill {% if variant == current_variant %}active{% endif %}{% unless variant.available %}disabled{% endunless %}"
-                  data-id="{{ variant.id }}"
-                  data-available="{{ variant.available }}"
-                >
-                  {{ variant.title }}
-                </button>
-              {% endfor %}
-            </div>
-          {% endif %}
-        {% else %}
-          <input type="hidden" name="id" value="{{ current_variant.id }}">
-        {% endif %}
+    {% render 'product-form', current_product: product, current_variant: current_variant, section_settings: section.settings %}
 
-        <div class="product__quantity">
-          <label for="quantity">Quantity</label>
-          <input type="text" name="quantity" min="1" value="1">
-        </div>
-
-        {% if product.available %}
-          <div class="product__buttons">
-            <input type="submit" class="product__submit" value="Add to cart">
-            {{ form | payment_button }}
-          </div>
-        {% else %}
-          <div class="product__buttons">
-            <input type="submit" class="product__submit" disabled value="Sold Out">
-          </div>
-        {% endif %}
-      {% endform %}
-    </div>
+    {% if section.settings.notify_me %}
+      {% render 'notify-me', current_product: product, current_variant: current_variant %}
+    {% endif %}
   </div>
 </div>
 
@@ -93,99 +60,11 @@
     flex-direction: column;
     gap: 10px;
   }
-  .product__form form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .product__quantity {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .product__quantity input {
-    width: 100%;
-    max-width: 100px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
-    font-weight: 400;
+  .product__price {
     color: #333;
   }
-  .product__buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .product__submit {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
-    font-weight: 400;
-    color: #333;
-    cursor: pointer;
-  }
-  .product__submit:hover {
-    background-color: #333;
-    color: #fff;
-  }
-  .product__submit:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  .product__variants-select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
-    font-weight: 400;
-    color: #333;
-  }
-  .product__variants-pills {
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .product__variant-pill {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 20px;
-    min-width: 70px;
-    cursor: pointer;
-  }
-  .product__variant-pill.active {
-    background-color: #333;
-    color: #fff;
-  }
-  .product__variant-pill.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  .product__variant-pill:hover {
-    background-color: #ccc;
-    color: #333;
-  }
-  .product__variant-pill:active {
-    background-color: #333;
-    color: #fff;
-  }
-  .product__variant-pill:focus {
-    outline: none;
-  }
-  .product__variant-pill:focus-visible {
-    outline: 2px solid #333;
-  }
-  .product__variant-pill:focus-visible:active {
-    outline: none;
-  }
-  .product__variant-pill:focus-visible:active:hover {
-    background-color: #333;
-    color: #fff;
+  .product__compare-price {
+    text-decoration: line-through;
   }
 
   @media (max-width: 768px) {
@@ -201,7 +80,88 @@
   }
 {% endstylesheet %}
 
-<script src="{{ 'product.js' | asset_url }}" defer></script>
+<script>
+  window.productConfig = {
+    addToCart: {{ 'product.add_to_cart' | t | json }},
+    soldOut: {{ 'product.sold_out' | t | json }},
+    canNotifyMe: {{ section.settings.notify_me | json }}
+  };
+</script>
+
+{% javascript %}
+  const ProductPage = {
+    init: function () {
+      this.productForm = document.querySelector('.product__form-form');
+      this.productActions = document.querySelector('.product__form-buttons');
+      this.productPrice = document.querySelector('.product__price');
+      this.productComparePrice = document.querySelector('.product__compare-price');
+      this.productNotifyMe = document.querySelector('.product__notify-me');
+
+      this.productVariantsPills = document.querySelectorAll('.product__form-pill');
+      this.productVariantsPills?.forEach((variant) => {
+        variant.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.updateVariant(variant);
+        });
+      });
+    },
+
+    updateVariant: function (variant) {
+      this.productForm.querySelector('input[name="id"]').value = variant.dataset.id;
+      this.productVariantsPills.forEach((otherVariant) => {
+        otherVariant.classList.remove('active');
+      });
+      variant.classList.add('active');
+      this.updateSubmitButton(variant);
+      this.updatePrice(variant);
+      this.updateNotifyMe(variant);
+    },
+
+    updateSubmitButton: function (variant) {
+      if (!this.productActions) return;
+      const submitButton = this.productActions.querySelector('.product__form-submit');
+      if (variant.dataset.available === 'false') {
+        submitButton.disabled = true;
+        submitButton.value = window.productConfig.soldOut;
+      } else {
+        submitButton.disabled = false;
+        submitButton.value = window.productConfig.addToCart;
+      }
+    },
+
+    updatePrice: function (variant) {
+      if (!this.productPrice) return;
+      this.productPrice.textContent = variant.dataset.price;
+
+      if (!this.productComparePrice) return;
+      this.productComparePrice.textContent = variant.dataset.comparePrice;
+
+      if (variant.dataset.onSale === 'true') {
+        this.productPrice.classList.add('product__sale-price');
+        this.productComparePrice.classList.remove('hide');
+      } else {
+        this.productPrice.classList.remove('product__sale-price');
+        this.productComparePrice.classList.add('hide');
+      }
+    },
+
+    updateNotifyMe: function (variant) {
+      if (!this.productNotifyMe) return;
+
+      document.getElementById('notify-me-variant-id').value = variant.dataset.id;
+      document.getElementById('notify-me-variant-title').value = variant.dataset.title;
+      if (variant.dataset.available === 'true') {
+        this.productNotifyMe.classList.add('hide');
+      } else {
+        this.productNotifyMe.classList.remove('hide');
+      }
+    },
+  };
+
+  document.addEventListener('DOMContentLoaded', function () {
+    ProductPage.init();
+  });
+{% endjavascript %}
 
 {% schema %}
 {
@@ -209,17 +169,27 @@
   "settings": [
     {
       "type": "header",
-      "content": "Variant Picker"
+      "content": "t:general.variant_picker"
     },
     {
       "type": "select",
       "id": "picker_type",
-      "label": "Picker type",
+      "label": "t:general.type",
       "default": "select",
       "options": [
-        { "value": "select", "label": "Dropdown" },
-        { "value": "pills", "label": "Pills" }
+        { "value": "select", "label": "t:options.variant_picker.dropdown" },
+        { "value": "pills", "label": "t:options.variant_picker.pills" }
       ]
+    },
+    {
+      "type": "header",
+      "content": "t:general.notify_me"
+    },
+    {
+      "type": "checkbox",
+      "id": "notify_me",
+      "label": "t:general.enabled",
+      "default": false
     }
   ],
   "disabled_on": {

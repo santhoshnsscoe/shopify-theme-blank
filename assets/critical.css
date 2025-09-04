@@ -115,3 +115,13 @@ body {
 .shopify-section > .full-width {
   grid-column: 1 / -1;
 }
+
+/* hide element class */
+.hide {
+  display: none !important;
+}
+
+/* error element class */
+.error {
+  border: 1px solid #ff0000 !important;
+}

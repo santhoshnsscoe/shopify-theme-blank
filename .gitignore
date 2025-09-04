@@ -17,7 +17,7 @@ release
 *.zip
 
 # extra
-
+backups/
 update-theme.md
 git.diff
 

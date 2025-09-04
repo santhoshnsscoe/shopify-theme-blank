@@ -12,7 +12,8 @@
     "main": {
       "type": "product",
       "settings": {
-        "picker_type": "pills"
+        "picker_type": "pills",
+        "notify_me": true
       }
     }
   },
