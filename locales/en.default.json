@@ -55,6 +55,26 @@
     "quantity": "Quantity",
     "notify_me": "Notify me when available",
     "submit": "Submit",
-    "email": "Email"
+    "email": "Email",
+    "images": "Product images",
+    "details": "Product details",
+    "pricing": "Product pricing",
+    "price": "Price",
+    "sale_price": "Sale price",
+    "compare_at_price": "Compare at price",
+    "description": "Product description",
+    "form": "Product form",
+    "variant_selection": "Variant selection",
+    "select_variant": "Select variant",
+    "variant_description": "Choose the variant you want to purchase",
+    "quantity_description": "Enter the quantity you want to purchase",
+    "actions": "Product actions",
+    "add_to_cart_description": "Add this product to your cart",
+    "sold_out_description": "This product is currently out of stock",
+    "notify_me_section": "Notify me section",
+    "notify_me_description": "Get notified when this product becomes available",
+    "email_placeholder": "Enter your email address",
+    "notify_me_email_description": "We'll send you an email when this product is back in stock",
+    "notify_me_submit_description": "Submit your email to be notified when available"
   }
 }

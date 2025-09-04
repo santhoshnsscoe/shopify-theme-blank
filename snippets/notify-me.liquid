@@ -12,52 +12,81 @@
   assign available = current_variant.available
 %}
 
-<div class="product__notify-me {% if available %}hide{% endif %}">
+<div
+  class="product__notify-me {% if available %}hide{% endif %}"
+  role="region"
+  aria-label="{{ 'product.notify_me_section' | t }}"
+>
   {% form 'contact', class: 'product__notify-me-form' %}
-    <h3>{{ 'product.notify_me' | t }}</h3>
-    <input
-      type="hidden"
-      name="contact[form_type]"
-      value="{{ 'product.notify_me' | t }}"
-    >
-    <input
-      type="hidden"
-      name="contact[product_id]"
-      id="notify-me-product-id"
-      value="{{ current_product.id }}"
-    >
-    <input
-      type="hidden"
-      name="contact[product_title]"
-      id="notify-me-product-title"
-      value="{{ current_product.title }}"
-    >
-    <input
-      type="hidden"
-      name="contact[variant_id]"
-      id="notify-me-variant-id"
-      value="{{ current_variant.id }}"
-    >
-    <input
-      type="hidden"
-      name="contact[variant_title]"
-      id="notify-me-variant-title"
-      value="{{ current_variant.title }}"
-    >
-    <input
-      type="email"
-      class="product__notify-me-email"
-      name="contact[email]"
-      id="notify-me-email"
-      placeholder="{{ 'product.email' | t }}"
-      value="{{ customer.email }}"
-    >
-    <input
-      type="submit"
-      class="product__notify-me-submit"
-      id="notify-me-submit"
-      value="{{ 'product.submit' | t }}"
-    >
+    <fieldset class="product__notify-me-fieldset" aria-labelledby="notify-me-legend">
+      <legend id="notify-me-legend" class="product__notify-me-legend">
+        <h3>{{ 'product.notify_me' | t }}</h3>
+      </legend>
+
+      <div class="product__notify-me-description">
+        <p>{{ 'product.notify_me_description' | t }}</p>
+      </div>
+
+      <input
+        type="hidden"
+        name="contact[form_type]"
+        value="{{ 'product.notify_me' | t }}"
+      >
+      <input
+        type="hidden"
+        name="contact[product_id]"
+        id="notify-me-product-id"
+        value="{{ current_product.id }}"
+      >
+      <input
+        type="hidden"
+        name="contact[product_title]"
+        id="notify-me-product-title"
+        value="{{ current_product.title }}"
+      >
+      <input
+        type="hidden"
+        name="contact[variant_id]"
+        id="notify-me-variant-id"
+        value="{{ current_variant.id }}"
+      >
+      <input
+        type="hidden"
+        name="contact[variant_title]"
+        id="notify-me-variant-title"
+        value="{{ current_variant.title }}"
+      >
+
+      <div class="product__notify-me-email-wrapper">
+        <label for="notify-me-email" class="product__notify-me-label">
+          {{ 'product.email' | t }}
+        </label>
+        <input
+          type="email"
+          class="product__notify-me-email"
+          name="contact[email]"
+          id="notify-me-email"
+          placeholder="{{ 'product.email_placeholder' | t }}"
+          value="{{ customer.email }}"
+          required
+          aria-describedby="notify-me-email-description"
+          aria-invalid="false"
+        >
+        <div id="notify-me-email-description" class="product__notify-me-description sr-only">
+          {{ 'product.notify_me_email_description' | t }}
+        </div>
+        <input
+          type="submit"
+          class="product__notify-me-submit"
+          id="notify-me-submit"
+          value="{{ 'product.submit' | t }}"
+          aria-describedby="notify-me-submit-description"
+        >
+        <div id="notify-me-submit-description" class="product__notify-me-description sr-only">
+          {{ 'product.notify_me_submit_description' | t }}
+        </div>
+      </div>
+    </fieldset>
   {% endform %}
 </div>
 
@@ -65,8 +94,51 @@
   .product__notify-me-form {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
   }
+
+  .product__notify-me-fieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .product__notify-me-legend {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #333;
+  }
+
+  .product__notify-me-legend h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .product__notify-me-description {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 10px;
+  }
+
+  .product__notify-me-description p {
+    margin: 0;
+  }
+
+  .product__notify-me-email-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .product__notify-me-label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: #333;
+  }
+
   .product__notify-me-submit {
     width: 100%;
     padding: 10px;
@@ -77,10 +149,17 @@
     color: #333;
     cursor: pointer;
   }
+
   .product__notify-me-submit:hover {
     background-color: #333;
     color: #fff;
   }
+
+  .product__notify-me-submit:focus {
+    outline: 2px solid #0056b3;
+    outline-offset: 2px;
+  }
+
   .product__notify-me-email {
     width: 100%;
     padding: 10px;
@@ -89,6 +168,16 @@
     font-size: 16px;
     font-weight: 400;
     color: #333;
+  }
+
+  .product__notify-me-email:focus {
+    outline: 2px solid #0056b3;
+    outline-offset: 2px;
+    border-color: #0056b3;
+  }
+
+  .product__notify-me-email.error {
+    border-color: #dc3545;
   }
 {% endstylesheet %}
 
@@ -99,7 +188,7 @@
       this.notifyMeSubmit = document.querySelector('#notify-me-submit');
       this.notifyMeEmail = document.querySelector('#notify-me-email');
 
-      this.notifyMeSubmit.addEventListener('click', (e) => {
+      this.notifyMeSubmit?.addEventListener('click', (e) => {
         e.preventDefault();
         this.submitForm();
       });

@@ -13,57 +13,117 @@
   assign available = current_variant.available
 %}
 
-<div class="product__form">
+<div class="product__form" role="region" aria-label="{{ 'product.form' | t }}">
   {% form 'product', current_product, class: 'product__form-form' %}
     {% if current_product.variants.size > 1 %}
-      {% if section_settings.picker_type == 'select' %}
-        <select class="product__form-select" name="id">
-          {% for variant in current_product.variants %}
-            <option
-              value="{{ variant.id }}"
-              {% if variant == current_variant %}
-                selected="selected"
-              {% endif %}
+      <fieldset class="product__form-variants" aria-labelledby="variant-legend">
+        <legend id="variant-legend" class="product__form-legend sr-only">{{ 'product.variant_selection' | t }}</legend>
+        
+        {% if section_settings.picker_type == 'select' %}
+          <div class="product__form-select-wrapper">
+            <label for="variant-select" class="product__form-label">{{ 'product.select_variant' | t }}</label>
+            <select 
+              class="product__form-select" 
+              name="id" 
+              id="variant-select"
+              aria-describedby="variant-description"
             >
-              {{ variant.title }} - {{ variant.price | money }}
-            </option>
-          {% endfor %}
-        </select>
-      {% else %}
-        <input type="hidden" name="id" value="{{ current_variant.id }}">
-        <div class="product__form-pills">
-          {% for variant in current_product.variants %}
-            <button
-              class="product__form-pill {% if variant == current_variant %}active{% endif %}{% unless variant.available %}disabled{% endunless %}"
-              data-id="{{ variant.id }}"
-              data-available="{{ variant.available }}"
-              data-price="{{ variant.price | money | json }}"
-              data-compare-price="{{ variant.compare_at_price | money | json }}"
-              data-on-sale="{% if variant.compare_at_price > variant.price %}true{% else %}false{% endif %}"
-              data-title="{{ variant.title }}"
-            >
-              {{ variant.title }}
-            </button>
-          {% endfor %}
-        </div>
-      {% endif %}
+              {% for variant in current_product.variants %}
+                <option
+                  value="{{ variant.id }}"
+                  {% if variant == current_variant %}
+                    selected="selected"
+                  {% endif %}
+                  {% unless variant.available %}
+                    disabled
+                  {% endunless %}
+                >
+                  {{ variant.title }} - {{ variant.price | money }}
+                  {% unless variant.available %}
+                    ({{ 'product.sold_out' | t }})
+                  {% endunless %}
+                </option>
+              {% endfor %}
+            </select>
+            <div id="variant-description" class="product__form-description sr-only">
+              {{ 'product.variant_description' | t }}
+            </div>
+          </div>
+        {% else %}
+          <input type="hidden" name="id" value="{{ current_variant.id }}">
+          <div class="product__form-pills" role="group" aria-labelledby="variant-legend">
+            {% for variant in current_product.variants %}
+              <button
+                type="button"
+                class="product__form-pill {% if variant == current_variant %}active{% endif %}{% unless variant.available %}disabled{% endunless %}"
+                data-id="{{ variant.id }}"
+                data-available="{{ variant.available }}"
+                data-price="{{ variant.price | money }}"
+                data-compare-price="{{ variant.compare_at_price | money }}"
+                data-on-sale="{% if variant.compare_at_price > variant.price %}true{% else %}false{% endif %}"
+                data-title="{{ variant.title }}"
+                {% if variant == current_variant %}
+                  aria-pressed="true"
+                {% else %}
+                  aria-pressed="false"
+                {% endif %}
+                {% unless variant.available %}
+                  aria-disabled="true"
+                {% endunless %}
+                aria-label="{{ variant.title }} - {{ variant.price | money }}{% unless variant.available %} - {{ 'product.sold_out' | t }}{% endunless %}"
+              >
+                {{ variant.title }}
+              </button>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </fieldset>
     {% else %}
       <input type="hidden" name="id" value="{{ current_variant.id }}">
     {% endif %}
 
-    <div class="product__form-quantity">
-      <label for="quantity">{{ 'product.quantity' | t }}</label>
-      <input type="text" name="quantity" min="1" value="1">
-    </div>
+    <fieldset class="product__form-quantity" aria-labelledby="quantity-legend">
+      <legend id="quantity-legend" class="product__form-legend sr-only">{{ 'product.quantity' | t }}</legend>
+      <label for="quantity-input" class="product__form-label">{{ 'product.quantity' | t }}</label>
+      <input 
+        type="number" 
+        name="quantity" 
+        id="quantity-input"
+        min="1" 
+        value="1"
+        aria-describedby="quantity-description"
+        class="product__form-quantity-input"
+      >
+      <div id="quantity-description" class="product__form-description sr-only">
+        {{ 'product.quantity_description' | t }}
+      </div>
+    </fieldset>
 
     {% if available %}
-      <div class="product__form-buttons">
-        <input type="submit" class="product__form-submit" value="{{ 'product.add_to_cart' | t }}">
+      <div class="product__form-buttons" role="group" aria-label="{{ 'product.actions' | t }}">
+        <input 
+          type="submit" 
+          class="product__form-submit" 
+          value="{{ 'product.add_to_cart' | t }}"
+          aria-describedby="submit-description"
+        >
+        <div id="submit-description" class="product__form-description sr-only">
+          {{ 'product.add_to_cart_description' | t }}
+        </div>
         {{ form | payment_button }}
       </div>
     {% else %}
-      <div class="product__form-buttons">
-        <input type="submit" class="product__form-submit" disabled value="{{ 'product.sold_out' | t }}">
+      <div class="product__form-buttons" role="group" aria-label="{{ 'product.actions' | t }}">
+        <input 
+          type="submit" 
+          class="product__form-submit" 
+          disabled 
+          value="{{ 'product.sold_out' | t }}"
+          aria-describedby="sold-out-description"
+        >
+        <div id="sold-out-description" class="product__form-description sr-only">
+          {{ 'product.sold_out_description' | t }}
+        </div>
       </div>
     {% endif %}
   {% endform %}
@@ -73,14 +133,49 @@
   .product__form-form {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 20px;
   }
+  
+  .product__form-variants,
+  .product__form-quantity {
+    border: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .product__form-legend {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #333;
+  }
+  
+  .product__form-label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: #333;
+  }
+  
+  .product__form-description {
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+  }
+  
+  .product__form-select-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  
   .product__form-quantity {
     display: flex;
     flex-direction: column;
     gap: 10px;
   }
-  .product__form-quantity input {
+  
+  .product__form-quantity-input {
     width: 100%;
     max-width: 100px;
     padding: 10px;
@@ -90,11 +185,13 @@
     font-weight: 400;
     color: #333;
   }
+  
   .product__form-buttons {
     display: flex;
     flex-direction: column;
     gap: 10px;
   }
+  
   .product__form-submit {
     width: 100%;
     padding: 10px;
@@ -105,14 +202,17 @@
     color: #333;
     cursor: pointer;
   }
+  
   .product__form-submit:hover {
     background-color: #333;
     color: #fff;
   }
+  
   .product__form-submit:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
+  
   .product__form-select {
     width: 100%;
     padding: 10px;
@@ -122,30 +222,42 @@
     font-weight: 400;
     color: #333;
   }
+  
   .product__form-pills {
     display: flex;
     flex-direction: row;
     gap: 10px;
     flex-wrap: wrap;
   }
+  
   .product__form-pill {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 20px;
     min-width: 70px;
     cursor: pointer;
+    background: none;
+    font-size: 14px;
   }
+  
   .product__form-pill.active {
     background-color: #333;
     color: #fff;
   }
+  
   .product__form-pill.disabled {
     opacity: 0.5;
     cursor: not-allowed;
     text-decoration: line-through;
   }
-  .product__form-pill:hover {
+  
+  .product__form-pill:hover:not(.disabled) {
     background-color: #ccc;
     color: #333;
+  }
+  
+  .product__form-pill:focus {
+    outline: 2px solid #0056b3;
+    outline-offset: 2px;
   }
 {% endstylesheet %}

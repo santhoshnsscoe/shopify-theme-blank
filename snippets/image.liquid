@@ -13,6 +13,7 @@
   @param {number} [width] - The highest resolution width of the image to be rendered
   @param {number} [height] - The highest resolution height of the image to be rendered
   @param {string} [crop] - The crop position of the image
+  @param {string} [alt] - Alt text for the image (defaults to image.alt or empty)
 
   @example
   {% render 'image', image: product.featured_image %}
@@ -24,6 +25,7 @@
     width: 1200,
     height: 800,
     crop: 'center',
+    alt: 'Product image'
   %}
 {% enddoc %}
 
@@ -37,15 +39,18 @@
   else
     assign wrapper = 'div'
   endif
+
+  assign alt_text = alt | default: image.alt | default: "image"
 %}
 
 <{{ wrapper }}
   class="image {{ class }}"
   {% if url %}
     href="{{ url }}"
+    aria-label="{{ alt_text }}"
   {% endif %}
 >
-  {{ image | image_url: width: width, height: height, crop: crop | image_tag }}
+  {{ image | image_url: width: width, height: height, crop: crop | image_tag: alt: alt_text, loading: 'lazy' }}
 </{{ wrapper }}>
 
 {% stylesheet %}

@@ -14,31 +14,64 @@
     assign on_sale = true
   endif
 %}
-<div class="product">
-  <div class="product__images">
+
+<main class="product" role="main" aria-labelledby="product-title">
+  <div class="product__images" role="region" aria-label="{{ 'product.images' | t }}">
     {% for image in product.images %}
-      {% render 'image', class: 'product__image', image: image %}
+      {% render 'image', 
+        class: 'product__image', 
+        image: image,
+        alt: image.alt | default: product.title
+      %}
     {% endfor %}
   </div>
-  <div class="product__details">
+  
+  <div class="product__details" role="region" aria-label="{{ 'product.details' | t }}">
     <div class="product__info">
-      <h1>{{ product.title }}</h1>
-      <p>
-        <span class="product__price {% if on_sale %}product__sale-price{% endif %}">{{ price | money }}</span>
-        <span class="product__compare-price {% unless on_sale %}hide{% endunless %}">
-          {{- compare_at_price | money -}}
-        </span>
-      </p>
-      <p>{{ product.description }}</p>
+      <h1 id="product-title" class="product__title">{{ product.title }}</h1>
+      
+      <div class="product__pricing" role="region" aria-label="{{ 'product.pricing' | t }}">
+        <p class="product__price-wrapper">
+          <span 
+            class="product__price {% if on_sale %}product__sale-price{% endif %}"
+            {% if on_sale %}
+              aria-label="{{ 'product.sale_price' | t }}: {{ price | money }}"
+            {% else %}
+              aria-label="{{ 'product.price' | t }}: {{ price | money }}"
+            {% endif %}
+          >
+            {{ price | money }}
+          </span>
+          <span 
+            class="product__compare-price {% if on_sale %}hide{% endif %}"
+            aria-label="{{ 'product.compare_at_price' | t }}: {{ compare_at_price | money }}"
+          >
+            {{- compare_at_price | money -}}
+          </span>
+        </p>
+      </div>
+      
+      {% if product.description != blank %}
+        <div class="product__description" role="region" aria-label="{{ 'product.description' | t }}">
+          <p>{{ product.description }}</p>
+        </div>
+      {% endif %}
     </div>
 
-    {% render 'product-form', current_product: product, current_variant: current_variant, section_settings: section.settings %}
+    {% render 'product-form', 
+      current_product: product, 
+      current_variant: current_variant, 
+      section_settings: section.settings 
+    %}
 
     {% if section.settings.notify_me %}
-      {% render 'notify-me', current_product: product, current_variant: current_variant %}
+      {% render 'notify-me', 
+        current_product: product, 
+        current_variant: current_variant 
+      %}
     {% endif %}
   </div>
-</div>
+</main>
 
 {% stylesheet %}
   .product {
@@ -130,9 +163,11 @@
     },
 
     updatePrice: function (variant) {
+      console.log('updatePrice', this.productPrice);
       if (!this.productPrice) return;
       this.productPrice.textContent = variant.dataset.price;
 
+      console.log('updatePrice', this.productComparePrice);
       if (!this.productComparePrice) return;
       this.productComparePrice.textContent = variant.dataset.comparePrice;
 
@@ -175,7 +210,7 @@
       "type": "select",
       "id": "picker_type",
       "label": "t:general.type",
-      "default": "select",
+      "default": "pills",
       "options": [
         { "value": "select", "label": "t:options.variant_picker.dropdown" },
         { "value": "pills", "label": "t:options.variant_picker.pills" }
@@ -189,7 +224,7 @@
       "type": "checkbox",
       "id": "notify_me",
       "label": "t:general.enabled",
-      "default": false
+      "default": true
     }
   ],
   "disabled_on": {
